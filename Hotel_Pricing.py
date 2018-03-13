@@ -10,10 +10,13 @@ Created on Sat Mar 10 23:49:17 2018
  
 import requests
 from bs4 import BeautifulSoup
-import time
+
+import numpy as np
+import matplotlib.pyplot as plt
 import random
 ###### USER INPUT- Provide the Tripadvisor URL #####
-url = 'https://www.tripadvisor.com/Hotels-g37242-Lafayette_Indiana-Hotels.html' 
+#url = 'https://www.tripadvisor.com/Hotels-g37242-Lafayette_Indiana-Hotels.html'
+url = 'https://www.tripadvisor.com/HotelsNear-g60745-qBOS-Boston_Massachusetts.html' 
 ######################
 
 with open('rates.csv', 'w') as rates:
@@ -33,6 +36,7 @@ with open('rates.csv', 'w') as rates:
         
         # Loop through each listing to extract relevant details
         ind = 0
+        prices = []
         for element in hotels:
             if element.find('a','property_title'):
                 ind = ind + 1
@@ -41,12 +45,26 @@ with open('rates.csv', 'w') as rates:
                 hotel_review = element.find('a','review_count').get_text().replace('reviews','').strip()
                 if element.find('div','price'):
                     hotel_price = element.find('div','price').get_text()
+                    if str(hotel_price)=='':
+                        prices.append(0)
+                        hotel_price = 'NA'
+                    else:
+                        prices.append(int(hotel_price.replace('$','')))
                     booking_website = element.find('span','provider').get_text()
 #                    print '%d, %s, %s, %s, %s, %s' %(ind, hotel_name, hotel_price, booking_website,hotel_rating, hotel_review)
                     rates.write(str(ind) + "; " + hotel_name + "; " + hotel_price + "; " + booking_website + "; " + hotel_rating + "; " + hotel_review + "\n")
                 else:
+                    prices.append(0)
 #                    print '%d, %s, %s, %s, %s, %s' %(ind, hotel_name, 'NA', 'NA',hotel_rating, hotel_review)
                     rates.write(str(ind) + "; " + hotel_name + "; " + "NA" + "; " + "NA" + "; " + hotel_rating + "; " + hotel_review + "\n")
+        n, bins, patches = plt.hist(prices, 5, facecolor='g', alpha=0.75)
+        plt.xlabel('Hotel Prices')
+        plt.ylabel('Frequency')
+        plt.title('Histogram of Hotel Prices')
+        plt.grid(True)
+        txt = "Mean = $%0.1f\nMedian = $%0.1f\nStd = $%0.1f" % (np.mean(prices), np.median(prices), np.std(prices))
+        plt.annotate(txt, xy=(0.7, 0.7), xycoords='axes fraction')
+        plt.show()
         
 #            # Do not abuse the internet!
 #            # time.sleep(1)
